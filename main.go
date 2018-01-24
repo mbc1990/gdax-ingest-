@@ -10,6 +10,8 @@ type Configuration struct {
 	PGUser     string
 	PGPassword string
 	PGDbname   string
+	GdaxKey    string
+	GdaxSecret string
 }
 
 func main() {
