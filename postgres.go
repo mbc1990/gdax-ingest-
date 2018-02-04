@@ -13,6 +13,16 @@ type PostgresClient struct {
 	Db       *sql.DB
 }
 
+func (p *PostgresClient) InsertTick(txnSide string, price float64, timestamp int) {
+	sqlStatement := `  
+  INSERT INTO transactions (txn_side, price, timestamp)
+  VALUES ($1, $2, to_timestamp($3))`
+	_, err := p.Db.Exec(sqlStatement, txnSide, price, timestamp)
+	if err != nil {
+		panic(err)
+	}
+}
+
 func (p *PostgresClient) GetDB() *sql.DB {
 	psqlInfo := fmt.Sprintf("host=%s port=%d user=%s "+
 		"password=%s dbname=%s sslmode=disable",

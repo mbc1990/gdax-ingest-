@@ -4,6 +4,7 @@ import (
 	"fmt"
 	ws "github.com/gorilla/websocket"
 	gdax "github.com/preichenberger/go-gdax"
+	"strconv"
 )
 
 type Ingester struct {
@@ -40,9 +41,22 @@ func (i *Ingester) Start() {
 			println(err.Error())
 			break
 		}
-		fmt.Println(message.Type)
 		if message.Type == "ticker" {
-			fmt.Println(message)
+			txnTime := message.Time.Time()
+
+			// For some reason, the first message we get has negative time and is
+			// missing information, so just throw that away for now
+			if txnTime.Unix() < 0 {
+				continue
+			}
+			price := message.Price
+			side := message.Side
+			fmt.Println("Time: " + strconv.Itoa(int(txnTime.Unix())))
+			fmt.Println("Price: ", price)
+			fmt.Println("Side: " + side)
+			fmt.Println("-------------------------")
+
+			i.PostgresClient.InsertTick(side, price, int(txnTime.Unix()))
 		}
 	}
 }
@@ -53,10 +67,8 @@ func NewIngester(conf *Configuration) *Ingester {
 	i.Url = "wss://ws-feed.gdax.com"
 
 	// Postgres
-	/*
-		i.PostgresClient = NewPostgresClient(i.Conf.PGHost, i.Conf.PGPort,
-			i.Conf.PGUser, i.Conf.PGPassword, i.Conf.PGDbname)
-	*/
+	i.PostgresClient = NewPostgresClient(i.Conf.PGHost, i.Conf.PGPort,
+		i.Conf.PGUser, i.Conf.PGPassword, i.Conf.PGDbname)
 
 	return i
 }
