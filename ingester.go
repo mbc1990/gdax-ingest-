@@ -49,8 +49,14 @@ func (i *Ingester) Start() {
 			if txnTime.Unix() < 0 {
 				continue
 			}
+			ticksCounter.Inc()
 			price := message.Price
 			side := message.Side
+			if side == "buy" {
+				buyGauge.Set(price)
+			} else {
+				sellGauge.Set(price)
+			}
 			fmt.Println("Time: " + strconv.Itoa(int(txnTime.Unix())))
 			fmt.Println("Price: ", price)
 			fmt.Println("Side: " + side)

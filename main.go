@@ -2,16 +2,19 @@ package main
 
 import "encoding/json"
 import "fmt"
+import "github.com/prometheus/client_golang/prometheus"
+import "net/http"
 import "os"
 
 type Configuration struct {
-	PGHost     string
-	PGPort     int
-	PGUser     string
-	PGPassword string
-	PGDbname   string
-	GdaxKey    string
-	GdaxSecret string
+	PGHost         string
+	PGPort         int
+	PGUser         string
+	PGPassword     string
+	PGDbname       string
+	GdaxKey        string
+	GdaxSecret     string
+	PrometheusPort string
 }
 
 func main() {
@@ -27,6 +30,13 @@ func main() {
 	if err != nil {
 		fmt.Println("error:", err)
 	}
+
+	prometheus.MustRegister(ticksCounter)
+	prometheus.MustRegister(buyGauge)
+	prometheus.MustRegister(sellGauge)
+	http.Handle("/metrics", prometheus.Handler())
+	go http.ListenAndServe(conf.PrometheusPort, nil)
+
 	ingester := NewIngester(&conf)
 	ingester.Start()
 }
